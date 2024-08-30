@@ -1,12 +1,9 @@
 ﻿using IudexBoost.Models.Classes;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Http;
-using System.Threading.Tasks;
-using IudexBoost.Repositories;
+using IudexBoost.Repository;
 using IudexBoost.ProjectServices.Services;
-using IudexBoost.ProjectServices.Interfaces;
+using IudexBoost.Business.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<Context>(options =>
@@ -27,11 +24,14 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     }
 );
 
-// Add services to the container.
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IOrderService, OrderService>();
-
+// Register repositories and services
+builder.Services.AddScoped(typeof(GenericRepository<>));
+builder.Services.AddScoped(typeof(IGenericService<>));
+//repos
+builder.Services.AddScoped<GenericRepository<User> ,UserRepository>();
+//services
+builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<UserService>();
 builder.Services.AddControllersWithViews();
 
 

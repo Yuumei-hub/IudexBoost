@@ -1,18 +1,19 @@
 ﻿using IudexBoost.Models.Classes;
+using IudexBoost.ProjectServices.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IudexBoost.Controllers
 {
     public class OrderController : Controller
     {
-        private readonly Context _context;
-        public OrderController(Context context)
+        private readonly OrderService _orderService;
+        public OrderController(OrderService orderService)
         {
-            _context = context;
+            _orderService = orderService;
         }
         public IActionResult Index()
         {
-            var orders = _context.Orders.ToList();
+            var orders = _orderService.GetAllOrders();
             return View(orders);
         }
 
@@ -25,7 +26,7 @@ namespace IudexBoost.Controllers
         //GET
         public IActionResult EditOrder(string orderId)
         {
-            var order = _context.Orders.FirstOrDefault(o=>o.OrderId==orderId);
+            var order = _orderService.GetOrderById(orderId);
             if(order==null)
                 return NotFound();
 
@@ -42,8 +43,7 @@ namespace IudexBoost.Controllers
             {
                 try
                 {
-                    _context.Orders.Update(order);
-                    _context.SaveChanges();
+                    _orderService.UpdateOrderStatus(orderId, order.Status);
                 }
                 catch (Exception)
                 {
@@ -54,32 +54,17 @@ namespace IudexBoost.Controllers
             return View(order);
         }
 
-        public IActionResult Delete(string orderId)
+        public IActionResult Delete(int orderId)
         {
-            var order = _context.Orders.FirstOrDefault(o=>o.OrderId==orderId);
-            if (order == null)
+            try
+            {
+                _orderService.DeleteOrder(orderId);
+                return RedirectToAction(nameof(Index));
+            }
+            catch(ArgumentException)
             {
                 return NotFound();
             }
-            return View(order);
-        
-        }
-
-
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(string orderId)
-        {
-            var order = _context.Orders.FirstOrDefault(o => o.OrderId == orderId);
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            _context.Orders.Remove(order);
-            _context.SaveChanges();
-
-            return View(order);
         }
 
     }

@@ -1,64 +1,63 @@
 ﻿using IudexBoost.Models.Classes;
 using IudexBoost.ProjectServices.Interfaces;
+using IudexBoost.Repository;
+using Microsoft.EntityFrameworkCore;
 
 namespace IudexBoost.ProjectServices.Services
 {
-    public class OrderService : IOrderService
+    public class OrderService
     {
-        private readonly Context _context;
-        public OrderService(Context context)
+        private readonly OrderRepository _orderRepository;
+        public OrderService(OrderRepository orderRepository)
         {
-            _context = context;
+            _orderRepository = orderRepository;
         }
 
         public List<Order> GetAllOrders()
         {
-            return _context.Orders.ToList();
+            return _orderRepository.GetAll().ToList();
         }
 
         public Order GetOrderById(string orderId)
         {
-            return _context.Orders.FirstOrDefault(o => o.OrderId == orderId);
+            return _orderRepository.GetById(orderId);
         }
 
         public Order UpdateOrder(string orderId, Order order)
         {
             if (orderId != order.OrderId)
                 throw new ArgumentException("Order ID does not match the ID of the order to update.");
-
-            _context.Orders.Update(order);
-            _context.SaveChanges();
-
+            _orderRepository.Update(order);
             return order;
         }
 
-        public void DeleteOrder(string orderId)
+        public void DeleteOrder(int orderId)
         {
-            var order = _context.Orders.FirstOrDefault(o => o.OrderId == orderId);
+            Order order = _orderRepository.GetById(orderId);
             if (order == null)
+            {
                 throw new ArgumentException("Order not found.");
+            }
 
-            _context.Orders.Remove(order);
-            _context.SaveChanges();
+            _orderRepository.Delete(order);
         }
         public void CreateOrder(Order order)
         {
-            _context.Orders.Add(order);
-            _context.SaveChanges();
+            _orderRepository.Add(order);
         }
 
-        public void UpdateOrderStatus(int orderId, string newStatus)
+        public void UpdateOrderStatus(string orderId, string newStatus)
         {
-            var order = _context.Orders.Find(orderId);
+            var order = _orderRepository.GetById(orderId);
             if (order != null)
             {
                 order.Status = newStatus;
-                _context.SaveChanges();
             }
             else
             {
                 throw new ArgumentException("Order not found.");
             }
         }
+
     }
 }

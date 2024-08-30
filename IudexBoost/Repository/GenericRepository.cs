@@ -1,13 +1,12 @@
-﻿using IudexBoost.Interface;
-using IudexBoost.Models.Classes;
+﻿using IudexBoost.Models.Classes;
 using Microsoft.EntityFrameworkCore;
 
 namespace IudexBoost.Repository
 {
-    public abstract class GenericRepository<T>: IGenericRepository<T> where T : class
+    public abstract class GenericRepository<T> where T : class
     {
         protected readonly Context _context;
-        private readonly DbSet<T> _dbSet;
+        protected readonly DbSet<T> _dbSet;
         public GenericRepository(Context context)
         {
                 _context = context;
@@ -24,14 +23,19 @@ namespace IudexBoost.Repository
             _dbSet.Remove(entity);
             _context.SaveChanges();
         }
-        public T GetById(int id)
-        {
-            return _dbSet.Find(id);
-        }
         public void Update(T entity)
         {
             _dbSet.Update(entity);
             _context.SaveChanges();
+        }
+        public virtual T GetById(int id)
+        {
+            return _dbSet.Find(id);
+        }
+
+        public IEnumerable<T> GetAll()
+        {
+            return _dbSet.ToList();
         }
     }
 }

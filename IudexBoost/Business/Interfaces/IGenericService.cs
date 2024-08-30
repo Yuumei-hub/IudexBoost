@@ -1,8 +1,8 @@
 ﻿using NuGet.Protocol.Core.Types;
 
-namespace IudexBoost.Interface
+namespace IudexBoost.Business.Interfaces
 {
-    public interface IGenericRepository<T> where T : class
+    public interface IGenericService<T> where T : class
     {
         void Add(T entity);
         T GetById(int id);

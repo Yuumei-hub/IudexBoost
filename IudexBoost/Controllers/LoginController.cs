@@ -5,15 +5,16 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
+using IudexBoost.ProjectServices.Services;
 
 namespace IudexBoost.Controllers
 {
     public class LoginController : Controller
     {
-        private readonly Context _context;
-        public LoginController(Context context)
+        private readonly UserService _userService;
+        public LoginController(UserService userService)
         {
-            _context = context;
+            _userService = userService;
         }
         public IActionResult Index()
         {
@@ -24,17 +25,17 @@ namespace IudexBoost.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult LoginForm( User user)
         {
-            var userfromDb= _context.Users.FirstOrDefault(x=>x.Email==user.Email&& x.Password==user.Password);
-            if (userfromDb == null)
+            var authenticatedUser = _userService.AuthenticateUser(user.Email, user.Password);
+            if (authenticatedUser == null)
             {
                 ViewBag.ErrorMessage = "Invalid email or password.";
                 return View("Index","Login");
             }
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name,userfromDb.Username),
-                new Claim(ClaimTypes.Email,userfromDb.Email),
-                new Claim(ClaimTypes.NameIdentifier,userfromDb.UserId.ToString())
+                new Claim(ClaimTypes.Name,authenticatedUser.Username),
+                new Claim(ClaimTypes.Email,authenticatedUser.Email),
+                new Claim(ClaimTypes.NameIdentifier,authenticatedUser.UserId.ToString())
             };
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var authProperties = new AuthenticationProperties
@@ -50,75 +51,26 @@ namespace IudexBoost.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult RegisterForm(User user)
         {
-            using (_context)
+            bool isRegistered = _userService.RegisterUser(user);
+
+            if(!isRegistered)
             {
-                bool userExists = _context.Users.Any(u => u.Username == user.Username || u.Email == user.Email);
-
-                if (userExists)
-                {
-                    ModelState.AddModelError("", "This username or email already exist.");
-                    return PartialView();
-                }
-                else
-                {
-                    user.IsBooster = false;
-                    _context.Users.Add(user);
-                    _context.SaveChanges();
-                    return View("Index");
-                }
+                ViewBag.ErrorMessage = "This username already exists.";
+                return View("Index");
             }
+
+            return View("Index");
         }
 
-        /*
-        [HttpGet]
-        public PartialViewResult Partial1()
-        {
-            return PartialView();
-        }
-        [HttpPost]
-        public IActionResult RegisterForm(User user)
-        {
-            using (_context)
-            {
-                bool userExists = _context.Users.Any(u => u.Username == user.Username || u.Email==user.Email);
+        /*Changes made:
+            Dependency Injection of UserService:
 
-                if (userExists)
-                {
-                    ModelState.AddModelError("", "This username or email already exist.");
-                    return PartialView();
-                }
-                else
-                {
-                    user.IsBooster = false;
-                    _context.Users.Add(user);
-                    _context.SaveChanges();
-                    return View("Index");
-                }
-            }
-        }
+            The LoginController now receives an instance of UserService via its constructor, allowing it to use the business logic encapsulated in UserService.
+            Authentication Logic Moved to UserService:
 
-        [HttpGet]
-        public PartialViewResult Partial2()
-        {
-            return PartialView();
-        }
-        [HttpPost]
-        public IActionResult LoginForm(User user)
-        {
-            using (_context)
-            {
-                bool userExists = _context.Users.Any(u => u.Username == user.Username && u.Password == user.Password);
-                if (userExists)
-                {
-                    if (user.IsBooster)
-                        return RedirectToAction("Index","Booster");
-                    else
-                        return RedirectToAction("Index","Default");
-                }
-                else
-                    return PartialView();
-            }
-        }
-        */
+            The direct database queries in LoginForm have been replaced with a call to AuthenticateUser, which handles the logic of verifying the email and password.
+            User Registration Logic Moved to UserService:
+
+            The RegisterForm method now uses the RegisterUser method of UserService, which checks for existing users and registers new ones if possible.*/
     }
 }
