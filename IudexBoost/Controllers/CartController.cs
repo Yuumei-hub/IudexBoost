@@ -12,18 +12,20 @@ namespace IudexBoost.Controllers
         private readonly CartService _cartService;
         private readonly GameService _gameService;
         private readonly RankPriceService _rankPriceService;
-        public CartController(CartService cartService, GameService gameService, RankPriceService rankPriceService)
+        private readonly CartItemService _cartItemService;
+        public CartController(CartService cartService, GameService gameService, RankPriceService rankPriceService, CartItemService cartItemService)
         {
             _cartService = cartService;
             _gameService = gameService;
             _rankPriceService = rankPriceService;
+            _cartItemService = cartItemService;
         }
 
         [HttpPost]
         public JsonResult AddCartItem(int quantity,string fromSkillRating, string toSkillRating, int gameId)
         {
             decimal price= _rankPriceService.GetPrice(fromSkillRating, toSkillRating);
-            CartItem cartItem=_cartService.CreateCartItem(quantity, price, fromSkillRating, toSkillRating, gameId);
+            CartItem cartItem=_cartItemService.CreateCartItem(quantity, price, fromSkillRating, toSkillRating, gameId);
 
             int userId = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             if(userId==null)
@@ -70,11 +72,11 @@ namespace IudexBoost.Controllers
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             Cart cart= _cartService.GetCartByUserId(Convert.ToInt32(userId));
-            CartItem cartItem = _cartService.GetCartItemById(cartItemid);
+            CartItem cartItem = _cartItemService.GetCartItemById(cartItemid);
             
             if(cartItem != null)
             {
-                _cartService.RemoveCartItem(cart, cartItemid);
+                _cartItemService.RemoveCartItem(cart, cartItemid);
             }
             return RedirectToAction("Index");
         }

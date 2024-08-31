@@ -7,6 +7,15 @@ namespace IudexBoost.Repository
         public CartItemRepository(Context context):base(context)
         {
         }
+        public void DeleteCartItem(Cart cart,CartItem cartItem)
+        {
+            if(cartItem != null)
+            {
+                cart.CartItems.Remove(cartItem);
+                _context.Remove(cartItem);
+                _context.SaveChanges();
+            }
+        }
 
     }
 }

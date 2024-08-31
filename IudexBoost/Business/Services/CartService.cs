@@ -37,26 +37,6 @@ namespace IudexBoost.Business.Services
             _cartRepository.Update(cart);
         }
 
-        public CartItem CreateCartItem(int quantity, decimal price, string fromSkillRating, string toSkillRating, int gameId)
-        {
-            //just creates a cart item object with the params.
-            Game game = _gameService.GetById(gameId);
-            if (game == null)
-                return null;
-
-            CartItem cartItem = new CartItem
-            {
-                GameName = game.Title,
-                GameImgUrl = game.ImageUrl,
-                Quantity = quantity,
-                Price = price,
-                FromSkillRating = fromSkillRating,
-                ToSkillRating = toSkillRating
-            };
-            return cartItem;
-        }
-        //should be in cartitemservice
-
         public void AddCartItemToCart(Cart cart, CartItem cartItem)
         {
             CartItem existingItem = cart.CartItems.FirstOrDefault(item => item.FromSkillRating == cartItem.FromSkillRating &&
@@ -73,19 +53,6 @@ namespace IudexBoost.Business.Services
             }
             else
                 existingItem.Quantity += cartItem.Quantity;
-        }
-        //should be in cartitemservice
-
-        public void RemoveCartItem(Cart cart, int cartItemId) 
-        {
-            CartItem cartItem = _cartRepository.GetCartItemById(cartItemId);
-            _cartRepository.DeleteCartItem(cart,cartItem);
-        }
-
-        //should be in cartitemservice
-        public CartItem GetCartItemById(int cartItemId)
-        {
-            return _cartRepository.GetCartItemById(cartItemId);
         }
 
         public Cart CreateCart(int userId)

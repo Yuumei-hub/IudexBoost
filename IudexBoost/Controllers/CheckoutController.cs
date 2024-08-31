@@ -18,9 +18,9 @@ namespace IudexBoost.Controllers
     public class CheckoutController : Controller
     {
         private readonly Context _context;
-        private readonly IOrderService _orderService;
+        private readonly OrderService _orderService;
 
-        public CheckoutController(Context context,IOrderService orderService)
+        public CheckoutController(Context context,OrderService orderService)
         {
             _context = context;
             _orderService = orderService;
