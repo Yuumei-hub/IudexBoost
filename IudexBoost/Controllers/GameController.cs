@@ -1,4 +1,5 @@
-﻿using IudexBoost.Models.Classes;
+﻿using IudexBoost.Business.Services;
+using IudexBoost.Models.Classes;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
@@ -6,21 +7,21 @@ namespace IudexBoost.Controllers
 {
     public class GameController : Controller
     {
-        private readonly Context _context;
-        public GameController(Context context)
+        private readonly GameService _gameService;
+        public GameController(GameService gameService)
         {
-            _context=context;
+            _gameService = gameService;
         }
         public IActionResult Index()
         {
-            var games = _context.Games.ToList();
+            List<Game> games = _gameService.GetAllGames();
 
             return View(games);
         }
 
         public IActionResult GameRedirector(int gameId)
         {
-            Game game = _context.Games.First(g => g.GameId == gameId);
+            Game game = _gameService.GetById(gameId);
             // Serialize the model into JSON format
             var serializedModel = JsonConvert.SerializeObject(game);
 

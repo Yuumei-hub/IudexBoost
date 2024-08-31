@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using IudexBoost.Repository;
 using IudexBoost.ProjectServices.Services;
 using IudexBoost.Business.Interfaces;
+using IudexBoost.Business.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<Context>(options =>
@@ -11,29 +12,37 @@ builder.Services.AddDbContext<Context>(options =>
                         "database=IudexBoostDB;" +
                         "integrated security=true;"));
 
-
-//Add authentication
+// Add authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
-    { options.LoginPath = "/Login/Index";
+    {
+        options.LoginPath = "/Login/Index";
         options.ExpireTimeSpan = TimeSpan.FromHours(1);
         options.SlidingExpiration = true;
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.Lax;
-    }
-);
+    });
 
 // Register repositories and services
-builder.Services.AddScoped(typeof(GenericRepository<>));
-builder.Services.AddScoped(typeof(IGenericService<>));
-//repos
-builder.Services.AddScoped<GenericRepository<User> ,UserRepository>();
-//services
-builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<UserService>();
-builder.Services.AddControllersWithViews();
 
+builder.Services.AddScoped<OrderRepository>();
+builder.Services.AddScoped<OrderService>();
+
+builder.Services.AddScoped<GameRepository>();
+builder.Services.AddScoped<GameService>();
+
+builder.Services.AddScoped<CartRepository>();
+builder.Services.AddScoped<CartService>();
+
+builder.Services.AddScoped<CartItemRepository>();
+builder.Services.AddScoped<CartItemService>();
+
+builder.Services.AddScoped<RankPriceService>();
+
+builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
@@ -41,7 +50,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -57,4 +65,3 @@ app.MapControllerRoute(
     pattern: "{controller=Login}/{action=Index}/{id?}");
 
 app.Run();
-

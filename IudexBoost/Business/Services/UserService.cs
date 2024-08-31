@@ -32,7 +32,7 @@ namespace IudexBoost.ProjectServices.Services
             if (user == null || user.Password != password)
                 return null;
             else
-                return _userRepository.GetByUsername(email);
+                return user;
         }
     }
 }

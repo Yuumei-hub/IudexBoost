@@ -3,59 +3,60 @@ using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using IudexBoost.Business.Services;
 
 namespace IudexBoost.Controllers
 {
     public class CartController : Controller
     {
-        private readonly Context _context;
-        public CartController(Context context)
+        private readonly CartService _cartService;
+        private readonly GameService _gameService;
+        private readonly RankPriceService _rankPriceService;
+        public CartController(CartService cartService, GameService gameService, RankPriceService rankPriceService)
         {
-            _context = context;
+            _cartService = cartService;
+            _gameService = gameService;
+            _rankPriceService = rankPriceService;
         }
 
         [HttpPost]
-        public JsonResult AddCartItem(int quantity,double price,string fromSkillRating, string toSkillRating, int gameId)
+        public JsonResult AddCartItem(int quantity,string fromSkillRating, string toSkillRating, int gameId)
         {
-            Game game = _context.Games.FirstOrDefault(g=>g.GameId==gameId);
+            decimal price= _rankPriceService.GetPrice(fromSkillRating, toSkillRating);
+            CartItem cartItem=_cartService.CreateCartItem(quantity, price, fromSkillRating, toSkillRating, gameId);
 
-            //creates the cart item obj
-            CartItem cartItem = new CartItem
-            {
-                GameName = game.Title,
-                GameImgUrl = game.ImageUrl,
-                Quantity = quantity,
-                Price = price,
-                FromSkillRating = fromSkillRating,
-                ToSkillRating = toSkillRating
-            };
+            int userId = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            if(userId==null)
+                return Json(new {success=false, message="Error. User id null"});
 
             if(cartItem==null)
                 return Json(new {success=false, message="Error. Cart item null"});
+            Cart cart= _cartService.GetCartByUserId(userId);
 
             if (ModelState.IsValid)
             {
-                Cart cart = GetOrCreateCartForUser();
-                var existingItem = cart.CartItems.FirstOrDefault(item => item.FromSkillRating == cartItem.FromSkillRating &&
-                item.ToSkillRating==cartItem.ToSkillRating&&
-                item.Price==cartItem.Price&&
-                item.GameName==cartItem.GameName&&
-                item.GameImgUrl==cartItem.GameImgUrl);
-                if (existingItem != null)
-                    existingItem.Quantity += cartItem.Quantity;
+                if (cart!=null)//if user has a cart already
+                {
+                    //add cartitem to cart
+                    _cartService.AddCartItemToCart(cart, cartItem);
+                }
                 else
-                    cart.CartItems.Add(cartItem);
-                _context.SaveChanges();
+                {
+                    //create cart first then add the item
+                    cart = _cartService.CreateCart(Convert.ToInt32(userId));
+                    _cartService.AddCartItemToCart(cart, cartItem);
+                }
                 return Json(new { success = true, message = "Successful data" });
             }
             return Json(new { success = false, message = "Invalid data" });
         }
         public IActionResult Index()
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             Cart cart;
             try
             {
-                cart = GetOrCreateCartForUser();
+                cart = _cartService.GetCartByUserId(Convert.ToInt32(userId));
             }
             catch (InvalidOperationException ex)
             {
@@ -67,52 +68,16 @@ namespace IudexBoost.Controllers
 
         public IActionResult DeleteCartItem(int cartItemid)
         {
-            Cart cart;
-
-            try
-            {
-                cart = GetOrCreateCartForUser();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return RedirectToAction("Index","Login");
-            }
-
-            CartItem cartItem = _context.CartItems.FirstOrDefault(item => item.CartItemId == cartItemid);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            Cart cart= _cartService.GetCartByUserId(Convert.ToInt32(userId));
+            CartItem cartItem = _cartService.GetCartItemById(cartItemid);
+            
             if(cartItem != null)
             {
-                cart.CartItems.Remove(cartItem);
-                _context.Remove(cartItem);
-                _context.SaveChanges();
+                _cartService.RemoveCartItem(cart, cartItemid);
             }
             return RedirectToAction("Index");
         }
 
-        private Cart GetOrCreateCartForUser()
-        {
-            //int userId = 3;
-            //check login
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                // Redirect to login page or take appropriate action
-                throw new InvalidOperationException("User is not authenticated");
-            }
-
-            //checks if there is any cart that belongs to the user then adds the item
-            var cart = _context.Carts
-                .Include(c => c.CartItems)
-                .FirstOrDefault(c => c.UserId == userId.ToString());
-
-            //if no cart's found creates cart
-            if (cart == null)
-            {
-                cart = new Cart { UserId = userId.ToString() };
-                _context.Carts.Add(cart);
-                _context.SaveChanges();
-            }
-
-            return cart;
-        }
     }
 }

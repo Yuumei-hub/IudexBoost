@@ -17,7 +17,7 @@ namespace IudexBoost.Models.Classes
         public string GameName { get; set; }
 
         [Required]
-        public double Price { get; set; }
+        public decimal Price { get; set; }
 
         [Required]
         public string FromSkillRating { get; set; }
