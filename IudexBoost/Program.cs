@@ -40,6 +40,9 @@ builder.Services.AddScoped<CartService>();
 builder.Services.AddScoped<CartItemRepository>();
 builder.Services.AddScoped<CartItemService>();
 
+builder.Services.AddScoped<TestimonialRepository>();
+builder.Services.AddScoped<TestimonialService>();
+
 builder.Services.AddScoped<RankPriceService>();
 
 builder.Services.AddControllersWithViews();

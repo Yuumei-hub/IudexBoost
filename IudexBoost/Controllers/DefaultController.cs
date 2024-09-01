@@ -8,9 +8,8 @@ namespace IudexBoost.Controllers
     {
         private readonly GameService _gameService;
         private readonly TestimonialService _testimonialService;
-        public DefaultController(Context context, GameService gameService,TestimonialService testimonialService)
+        public DefaultController(GameService gameService,TestimonialService testimonialService)
         {
-            _context = context;
             _gameService = gameService;
             _testimonialService = testimonialService;
         }
